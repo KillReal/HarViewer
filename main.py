@@ -43,11 +43,12 @@ def main(harFilePath, resType, reqType, width):
             exit(0)
         elif (inp == "help" or inp == "!help" or inp == "!h"):
             print("This is a CMD help:")
+            print("     <Id> - print request details with certain Id from table above")
             print("     <EMPTY> or (l)ist - print all requests")
-            print("     (c)ookie - print cookies for last selected request")
-            print("     (req)uest - copy to clipboard request content from latest request")
-            print("     (res)ponse -  copy to clipboard response content from latest request")
-            print("     (w)ebsocket - copy to clipboard websocket content from latest request")
+            print("     (c)ookie - print cookies for latest selected request")
+            print("     (req)uest - copy to clipboard request content from latest selected request")
+            print("     (res)ponse -  copy to clipboard response content from latest selected request")
+            print("     (w)ebsocket - copy to clipboard websocket content from latest selected request")
             print("     (e)xit - exit from app")
         else:
             if (inp.isdecimal()):
