@@ -1,4 +1,4 @@
-# Summary
+# Overview
 
 HarViewer is a console application that helps you to view and inspect recorded har-files.
 
