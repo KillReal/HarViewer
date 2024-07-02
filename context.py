@@ -108,6 +108,7 @@ class Context:
             print("REQUEST —————> " + e["_resourceType"] + " :")
         print("    Headers count: " + str(len(req["headers"])))
         print("    Headers size: " + humanize.naturalsize(req["headersSize"]))
+        print("    Cookies count: " + str(len(req["cookies"])))
         print("    Body size: " + humanize.naturalsize(req["bodySize"]))
         print("")
         print("Content:")
@@ -123,8 +124,9 @@ class Context:
         print("RESPONSE <————— " + res["content"]["mimeType"] +":")
         print("    Status: " + str(status))
         if (status != 0):
-            print("    Headers count: " + str(len(req["headers"])))
+            print("    Headers count: " + str(len(res["headers"])))
             print("    Headers size: " + humanize.naturalsize(res["headersSize"]))
+            print("    Cookies count: " + str(len(res["cookies"])))
             print("    Body size: " + humanize.naturalsize(res["content"]["size"]))
             print("")
             print("Content:")
