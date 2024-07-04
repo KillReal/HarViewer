@@ -1,4 +1,5 @@
 import json
+import re
 
 class ConUtils:
     @staticmethod
@@ -20,3 +21,16 @@ class ConUtils:
     @staticmethod
     def prettyJson(content):
         return json.dumps(content, indent = 4)
+    
+    @staticmethod
+    def copyHostFromUrl(url):
+        urlRegex = "(.*://[A-Za-z_0-9.:-]+).*"
+
+        m = re.search(urlRegex, url)
+        if m:
+            return m.group(1)
+        return ""
+
+    @staticmethod
+    def replaceHostInUrl(url, domain, placeholder = "{host}"):
+        return url.replace(domain, placeholder)

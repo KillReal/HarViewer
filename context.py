@@ -4,7 +4,6 @@ from harResTypes import replaceResType
 import humanize
 from prettytable import PrettyTable
 import json
-import re
 from datetime import datetime, timedelta
 
 class Context:
@@ -13,7 +12,6 @@ class Context:
         self.waterfallMaxLength = waterfallMaxLength
         self.entries = []
         self.lastEntry = {}
-        self.urlRegex = "(.*://[A-Za-z_0-9.:-]+).*"
         self.truncateContent = 1000
 
     def makeWaterfall(self, startTime, completeTime, timings):
@@ -145,16 +143,7 @@ class Context:
             print("WEBSOCKET:")
             print(ConUtils.shorten(ConUtils.prettyContent(e["_webSocketMessages"]), self.truncateContent))
 
-    def copyHostFromUrl(self, url):
-        m = re.search(self.urlRegex, url)
-        if m:
-            return m.group(1)
-        return ""
-
-    def replaceHostInUrl(self, url, domain, placeholder = "{host}"):
-        return url.replace(domain, placeholder)
-
-    def printRequests(self, har, resType, reqType):
+    def printRequests(self, har, resType, reqType, filter):
         self.entries = har["log"]["entries"]
 
         initTime = datetime.fromisoformat(self.entries[0]["startedDateTime"])
@@ -171,16 +160,17 @@ class Context:
         for id, e in enumerate(self.entries):
             startTime = ConUtils.timeToMs(datetime.fromisoformat(e["startedDateTime"]) - initTime)
             url = e["request"]["url"]
-            host = self.copyHostFromUrl(url)
+            host = ConUtils.copyHostFromUrl(url)
 
             if (host != ""):
                 if (host not in hosts):
                     hostPlaceholder = "{host" + str(len(hosts) + 1) + "}"
                     hosts.append(str(host))
-                url = self.replaceHostInUrl(url, host, hostPlaceholder)
+                url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
-                (reqType == "all" or e["request"]["method"].lower() == reqType)):
+                (reqType == "all" or e["request"]["method"].lower() == reqType) and
+                (filter == "" or (filter.lower() in url.lower()))):
                 t.add_row([id, e["request"]["method"], e["response"]["status"],
                     ConUtils.shorten(url, self.urlMaxLength), int(e["time"]),
                     self.makeWaterfall(startTime, completeTime, e["timings"])])
