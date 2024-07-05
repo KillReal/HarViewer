@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 class ConUtils:
@@ -34,3 +35,7 @@ class ConUtils:
     @staticmethod
     def replaceHostInUrl(url, domain, placeholder = "{host}"):
         return url.replace(domain, placeholder)
+
+    @staticmethod 
+    def clear():
+        os.system('cls' if os.name=='nt' else 'clear')

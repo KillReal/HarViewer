@@ -12,6 +12,7 @@ class Context:
         self.waterfallMaxLength = waterfallMaxLength
         self.entries = []
         self.lastEntry = {}
+        self.lastShowedIds = []
         self.truncateContent = 1000
 
     def makeWaterfall(self, startTime, completeTime, timings):
@@ -67,6 +68,34 @@ class Context:
         print(" ")
         print("RESPONSE <————— Headers: ")
         print(json.dumps(self.lastEntry["response"]["headers"], indent = 4))
+
+    def printNextRequestDetail(self):
+        if (self.lastEntry == {}):
+            print("No next request available")
+            return
+        
+        id = self.entries.index(self.lastEntry)
+        nextId = self.lastShowedIds.index(id) + 1
+
+        if (nextId >= len(self.lastShowedIds)):
+            print("No next request available")
+            return
+
+        self.printRequestDetail(self.lastShowedIds[nextId])
+    
+    def printPrevRequestDetail(self):
+        if (self.lastEntry == {}):
+            print("No next request available")
+            return
+        
+        id = self.entries.index(self.lastEntry)
+        nextId = self.lastShowedIds.index(id) - 1
+        
+        if (nextId < 0):
+            print("No previous request available")
+            return
+
+        self.printRequestDetail(self.lastShowedIds[nextId])
 
     def printRequestDetail(self, id):
         e = self.entries[id]
@@ -155,6 +184,7 @@ class Context:
         hosts = []
         hostPlaceholder = "{host" + str(len(hosts) + 1) + "}"
 
+        self.lastShowedIds = []
         t = PrettyTable(['Id', 'Req', 'Res', 'Url', "Time", "Waterfall"])
         t.align = "l"
         for id, e in enumerate(self.entries):
@@ -174,6 +204,7 @@ class Context:
                 t.add_row([id, e["request"]["method"], e["response"]["status"],
                     ConUtils.shorten(url, self.urlMaxLength), int(e["time"]),
                     self.makeWaterfall(startTime, completeTime, e["timings"])])
+                self.lastShowedIds.append(id)
         print(t)
 
         for id, host in enumerate(hosts):
@@ -202,12 +233,43 @@ class Context:
             pyperclip.copy(text)
             print("Response content copyied to clipboard")
         else:
-            pyperclip.copy("")
             print("No response content available")
 
     def copyWebsocketContent(self):
         if (self.lastEntry != {} and self.lastEntry["_resourceType"] == "websocket"):
             print("WebSocket content copyied to clipboard")
             pyperclip.copy(ConUtils.prettyContent(self.lastEntry["_webSocketMessages"]))
+        else:
+            print("No WebSocket content available")
+
+    def requestContent(self):
+        if (self.lastEntry == {}):
+            print("No request content available")
+
+        res = ""
+        print("Request content:")
+
+        method = self.lastEntry["request"]["method"]
+        if ((method == "POST" or method == "PUT" or method == "DELETE") and self.lastEntry["request"]["bodySize"] > 0):
+            if (self.lastEntry["request"]["postData"]["mimeType"] == "application/json"):
+                res = ConUtils.prettyContent(self.lastEntry["request"]["postData"]["text"])
+            else:
+                res = ConUtils.prettyContent(self.lastEntry["request"]["postData"]["params"])
+            print(res)
+        else:
+            print(ConUtils.prettyContent(self.lastEntry["request"]["queryString"]))
+
+    def responseContent(self):
+        if (self.lastEntry != {} and self.lastEntry["response"]["content"]["size"] > 0):
+            res = ConUtils.prettyContent(self.lastEntry["response"]["content"]["text"])
+            print("Response content:")
+            print(res)
+        else:
+            print("No response content available")
+
+    def websocketContent(self):
+        if (self.lastEntry != {} and self.lastEntry["_resourceType"] == "websocket"):
+            print("Websocket content:")
+            print(ConUtils.prettyContent(self.lastEntry["_webSocketMessages"]))
         else:
             print("No WebSocket content available")

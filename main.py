@@ -2,6 +2,7 @@ import json
 import codecs
 import os
 
+from conUtils import ConUtils
 from context import Context
 
 def main(harFilePath, resType, reqType, width, filter):
@@ -20,11 +21,13 @@ def main(harFilePath, resType, reqType, width, filter):
     har = json.loads(jsonContent)
     context = Context(urlMaxLength, waterfallMaxLength)
 
+    ConUtils.clear()
     context.printRequests(har, resType, reqType, filter)
 
     while (1):
         print("")
         inp = input("CMD >>: ")
+        ConUtils.clear()
         print("")
 
         if (inp == "list" or inp == "l" or inp == ""):
@@ -34,10 +37,16 @@ def main(harFilePath, resType, reqType, width, filter):
         elif (inp == "headers" or inp == "h"):
             context.printHeaders()
         elif (inp == "request" or inp == "req"):
-            context.copyRequestContent()
+            context.requestContent()
         elif (inp == "response" or inp == "res"):
-            context.copyResponseContent()
+            context.responseContent()
         elif (inp == "websocket" or inp == "w"):
+            context.websocketContent()
+        elif (inp == "crequest" or inp == "creq"):
+            context.copyRequestContent()
+        elif (inp == "cresponse" or inp == "cres"):
+            context.copyResponseContent()
+        elif (inp == "cwebsocket" or inp == "cw"):
             context.copyWebsocketContent()
         elif (inp == "exit" or inp == "e"):
             exit(0)
@@ -46,16 +55,24 @@ def main(harFilePath, resType, reqType, width, filter):
             print("     <Id> - print request details with certain Id from table above")
             print("     <EMPTY> or <SEARCH PATTERN> - print all requests or request that contains <SEARCH PATTERN> in url")
             print("     (c)ookie - print cookies for latest selected request")
-            print("     (req)uest - copy to clipboard request content from latest selected request")
-            print("     (res)ponse -  copy to clipboard response content from latest selected request")
-            print("     (w)ebsocket - copy to clipboard websocket content from latest selected request")
-            print("     (e)xit - exit from app")
+            print("     (req)uest - prin request content from latest selected request")
+            print("     (res)ponse -  print response content from latest selected request")
+            print("     (w)ebsocket - print websocket content from latest selected request")
+            print("     (creq)uest - copy to clipboard request content from latest selected request")
+            print("     (cres)ponse -  copy to clipboard response content from latest selected request")
+            print("     (cw)ebsocket - copy to clipboard websocket content from latest selected request")
+            print("     (ce)xit - exit from app")
         else:
             if (inp.isdecimal()):
                 context.printRequestDetail(int(inp))
             else:
-                print("Showing requests that contains <" + inp + "> in url...")
-                context.printRequests(har, resType, reqType, inp)
+                if (inp == "n"):
+                    context.printNextRequestDetail()
+                elif (inp == "p"):
+                    context.printPrevRequestDetail()
+                else:
+                    print("Showing requests that contains <" + inp + "> in url...")
+                    context.printRequests(har, resType, reqType, inp)
 
 if __name__ == '__main__':
     import argparse
