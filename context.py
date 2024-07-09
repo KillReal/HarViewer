@@ -210,6 +210,8 @@ class Context:
             #     urlShorten = fgColors.YELLOW + urlShorten + fgColors.ENDC
             elif (e["_resourceType"] == "document"):
                 urlShorten = fgColors.PURPLE + urlShorten + fgColors.ENDC
+            elif (e["_resourceType"] == "websocket"):
+                urlShorten = fgColors.CYAN + urlShorten + fgColors.ENDC
             # elif (e["_resourceType"] == "image"):
             #     urlShorten = fgColors.GREEN + urlShorten + fgColors.ENDC
             # elif (e["_resourceType"] == "stylesheet" or e["_resourceType"] == "font"):
@@ -220,7 +222,7 @@ class Context:
                 time = ">9999"
 
             if ("_fromCache" in e):
-                time = fgColors.GRAY + str(time) + fgColors.ENDC
+                time = fgColors.GRAYUNDERLINE + str(time) + fgColors.ENDC
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
                 (reqType == "all" or e["request"]["method"].lower() == reqType) and

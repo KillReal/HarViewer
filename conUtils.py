@@ -10,10 +10,12 @@ class fgColors:
     PURPLE = '\033[35m'
     YELLOW = '\033[93m'
     GRAY = '\033[90m'
+    GRAY = '\033[90m'
     RED = '\033[91m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    UNDERLINE = '\033[4'
+    GRAYUNDERLINE = '\033[4;90m'
 
 class ConUtils:
     @staticmethod
