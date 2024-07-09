@@ -13,20 +13,20 @@ class Context:
         self.entries = []
         self.lastEntry = {}
         self.lastShowedIds = []
-        self.truncateContent = 1000
+        self.truncateContent = 500
 
     def makeWaterfall(self, startTime, completeTime, timings):
         step = completeTime / self.waterfallMaxLength
+
+        if (step == 0):
+            step = 1
 
         blocked = timings["blocked"]
         send = timings["send"]
         wait = timings["wait"]
         recieve = timings["receive"]
 
-        time = blocked + send + wait + recieve
-
         startSteps = int(startTime / step)
-
         blockedSteps = int(blocked / step)
         sendSteps = int(send / step)
         waitSteps = int(wait / step)
@@ -111,7 +111,8 @@ class Context:
 
         startTime = 0
         endTime = startTime + int(e["time"])
-
+        if ("_fromCache" in e):
+            print("Cached: " + e["_fromCache"])
         print("Timestamp: " + e["startedDateTime"])
         print("Timing: "+ self.makeWaterfall(startTime, endTime, e["timings"]) +
             " (" + str(int(e["time"])) +" ms)")
@@ -176,16 +177,17 @@ class Context:
         self.entries = har["log"]["entries"]
 
         initTime = datetime.fromisoformat(self.entries[0]["startedDateTime"])
-        latestEntry = max(self.entries, key=lambda x:x["startedDateTime"])
+        latestEntry = max(self.entries, key=lambda x: int(ConUtils.timeToMs(datetime.fromisoformat(x["startedDateTime"]) - initTime)
+            + x["time"]))
 
         completeTime = int(ConUtils.timeToMs(datetime.fromisoformat(latestEntry["startedDateTime"]) - initTime)
             + latestEntry["time"])
 
         hosts = []
-        hostPlaceholder = "{host" + str(len(hosts) + 1) + "}"
+        hostPlaceholder = "{" + str(len(hosts) + 1) + "}"
 
         self.lastShowedIds = []
-        t = PrettyTable(['Id', 'Req', 'Res', 'Url', "Time", "Waterfall"])
+        t = PrettyTable(['Id', 'Req', 'Res', 'Url', "Time ", "Waterfall"])
         t.align = "l"
         for id, e in enumerate(self.entries):
             startTime = ConUtils.timeToMs(datetime.fromisoformat(e["startedDateTime"]) - initTime)
@@ -194,21 +196,30 @@ class Context:
 
             if (host != ""):
                 if (host not in hosts):
-                    hostPlaceholder = "{host" + str(len(hosts) + 1) + "}"
+                    hostPlaceholder = "{" + str(len(hosts) + 1) + "}"
                     hosts.append(str(host))
+                else:
+                    hostPlaceholder = "{" + str(hosts.index(host) + 1) + "}"
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
+
+            time = int(e["time"])
+            if (time > 10000):
+                time = ">9999"
+
+            if ("_fromCache" in e):
+                time = "c"
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
                 (reqType == "all" or e["request"]["method"].lower() == reqType) and
                 (filter == "" or (filter.lower() in url.lower()))):
                 t.add_row([id, e["request"]["method"], e["response"]["status"],
-                    ConUtils.shorten(url, self.urlMaxLength), int(e["time"]),
+                    ConUtils.shorten(url, self.urlMaxLength), time,
                     self.makeWaterfall(startTime, completeTime, e["timings"])])
                 self.lastShowedIds.append(id)
         print(t)
 
         for id, host in enumerate(hosts):
-            print("{host" + str(id + 1) + "} = " + host)
+            print("{" + str(id + 1) + "} = " + host)
 
         completeTimeHumanized = humanize.naturaldelta(timedelta(microseconds=completeTime * 1000))
         print("Total recorded time: " + str(completeTimeHumanized) + " (" + str(completeTime) + " ms)")

@@ -79,9 +79,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Create a HarView scheme')
     parser.add_argument('-s', metavar='Path', required=True, help='Path to har file')
-    parser.add_argument('-r', metavar='Resource filter', required=False, 
+    parser.add_argument('-t', metavar='Request by resource type filter', required=False, 
                         help='Filter requests by resource type (doc, js, css, etc ...)', default="all")
-    parser.add_argument('-t', metavar='Type filter', required=False, 
+    parser.add_argument('-r', metavar='Request type filter', required=False, 
                         help='Filter requests by type (GET, POST, etc ...)', default="all")
     parser.add_argument('-w', metavar='Max screen width', required=False, 
                         help='Set display width in units (default is auto)', default="auto")
@@ -89,4 +89,4 @@ if __name__ == '__main__':
                         help='Set display width in units (default is auto)', default="")
     args = parser.parse_args()
 
-    main(harFilePath=args.s, resType=args.r, reqType=args.t, width=args.w, filter=args.f)
+    main(harFilePath=args.s, resType=args.t, reqType=args.r, width=args.w, filter=args.f)
