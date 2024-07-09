@@ -1,5 +1,5 @@
 import pyperclip
-from conUtils import ConUtils
+from conUtils import ConUtils, fgColors
 from harResTypes import replaceResType
 import humanize
 from prettytable import PrettyTable
@@ -202,18 +202,31 @@ class Context:
                     hostPlaceholder = "{" + str(hosts.index(host) + 1) + "}"
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
+            urlShorten = ConUtils.shorten(url, self.urlMaxLength)
+
+            if (e["_resourceType"] == "xhr"):
+                urlShorten = fgColors.BLUE + urlShorten + fgColors.ENDC
+            # elif (e["_resourceType"] == "script"):
+            #     urlShorten = fgColors.YELLOW + urlShorten + fgColors.ENDC
+            elif (e["_resourceType"] == "document"):
+                urlShorten = fgColors.PURPLE + urlShorten + fgColors.ENDC
+            # elif (e["_resourceType"] == "image"):
+            #     urlShorten = fgColors.GREEN + urlShorten + fgColors.ENDC
+            # elif (e["_resourceType"] == "stylesheet" or e["_resourceType"] == "font"):
+            #     urlShorten = fgColors.RED + urlShorten + fgColors.ENDC
+
             time = int(e["time"])
             if (time > 10000):
                 time = ">9999"
 
             if ("_fromCache" in e):
-                time = "c"
+                time = fgColors.GRAY + str(time) + fgColors.ENDC
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
                 (reqType == "all" or e["request"]["method"].lower() == reqType) and
                 (filter == "" or (filter.lower() in url.lower()))):
                 t.add_row([id, e["request"]["method"], e["response"]["status"],
-                    ConUtils.shorten(url, self.urlMaxLength), time,
+                    urlShorten, time,
                     self.makeWaterfall(startTime, completeTime, e["timings"])])
                 self.lastShowedIds.append(id)
         print(t)
