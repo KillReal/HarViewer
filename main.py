@@ -23,6 +23,7 @@ def main(harFilePath, resType, reqType, width, filter):
 
     ConUtils.clear()
     context.printRequests(har, resType, reqType, filter)
+    selectedRequestId = -1
 
     while (1):
         print("")
@@ -31,7 +32,13 @@ def main(harFilePath, resType, reqType, width, filter):
         print("")
 
         if (inp == "list" or inp == "l" or inp == ""):
-            context.printRequests(har, resType, reqType, filter)
+            print(selectedRequestId)
+            if (selectedRequestId > 0):
+                context.printRequestDetail(selectedRequestId)
+                selectedRequestId = -1
+            else:
+                context.printRequests(har, resType, reqType, filter)
+                selectedRequestId = -1
         elif (inp == "cookies" or inp == "c"):
             context.printCookies()
         elif (inp == "headers" or inp == "h"):
@@ -65,6 +72,8 @@ def main(harFilePath, resType, reqType, width, filter):
         else:
             if (inp.isdecimal()):
                 context.printRequestDetail(int(inp))
+                selectedRequestId = int(inp)
+                print(selectedRequestId)
             else:
                 if (inp == "n"):
                     context.printNextRequestDetail()
