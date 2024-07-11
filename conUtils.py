@@ -71,7 +71,7 @@ class ConUtils:
     
     @staticmethod
     def colorizeUrlByResourceType(url: str, resType: str):
-        if (resType == "xhr"):
+        if (resType == "xhr" or resType == "fetch"):
             url = fgColors.BLUE + url + fgColors.ENDC
         # elif (resType == "script"):
         #     url = fgColors.YELLOW + url + fgColors.ENDC
