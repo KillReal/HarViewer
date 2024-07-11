@@ -19,6 +19,7 @@ def main(harFilePath, resType, reqType, width, filter):
     f = codecs.open(harFilePath, "r", "utf-8")
     jsonContent = f.read()
     har = json.loads(jsonContent)
+
     context = Context(urlMaxLength, waterfallMaxLength)
 
     ConUtils.clear()
@@ -67,7 +68,7 @@ def main(harFilePath, resType, reqType, width, filter):
             print("     (creq)uest - copy to clipboard request content from latest selected request")
             print("     (cres)ponse -  copy to clipboard response content from latest selected request")
             print("     (cw)ebsocket - copy to clipboard websocket content from latest selected request")
-            print("     (ce)xit - exit from app")
+            print("     (e)xit - exit from app")
         else:
             if (inp.isdecimal()):
                 context.printRequestDetail(int(inp))

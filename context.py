@@ -51,10 +51,10 @@ class Context:
             return
 
         print(" ")
-        print("REQUEST —————> Cookies: ")
+        print(fgColors.YELLOW + "REQUEST —————> Cookies: " + fgColors.ENDC)
         print(ConUtils.prettyContent(self.lastEntry["request"]["cookies"]))
         print(" ")
-        print("RESPONSE <————— Cookies: ")
+        print(fgColors.YELLOW + "RESPONSE <————— Cookies: " + fgColors.ENDC)
         print(ConUtils.prettyContent(self.lastEntry["response"]["cookies"]))
 
     def printHeaders(self):
@@ -63,10 +63,10 @@ class Context:
             return
 
         print(" ")
-        print("REQUEST —————> Headers: ")
+        print(fgColors.YELLOW + "REQUEST —————> Headers: " + fgColors.ENDC)
         print(json.dumps(self.lastEntry["request"]["headers"], indent = 4))
         print(" ")
-        print("RESPONSE <————— Headers: ")
+        print(fgColors.YELLOW + "RESPONSE <————— Headers: "+ fgColors.ENDC)
         print(json.dumps(self.lastEntry["response"]["headers"], indent = 4))
 
     def printNextRequestDetail(self):
@@ -107,10 +107,13 @@ class Context:
         req = e["request"]
         res = e["response"]
 
-        status = e["response"]["status"]
+        status: int = e["response"]["status"]
         method = req["method"]
 
-        print("[" + str(id) + "] ——— " + str(status) + " " + method + " " + req["url"])
+        statusCodeText = ConUtils.colorizeStatusCode(status)
+        urlText = ConUtils.colorizeUrlByResourceType(req["url"], e["_resourceType"])
+
+        print("[" + str(id) + "] ——— " + statusCodeText + " " + method + " " + urlText)
         print("")
 
         startTime = 0
@@ -135,9 +138,9 @@ class Context:
         print("    receive (↓): " + str(int(e["timings"]["receive"])) + " ms")
         print("")
         if (self.isHasBody(req)):
-            print("REQUEST —————> " + req["postData"]["mimeType"] + ": ")
+            print(ConUtils.colorizeText("REQUEST —————> " + req["postData"]["mimeType"] + ": ", fgColors.YELLOW))
         else:
-            print("REQUEST —————> " + e["_resourceType"] + " :")
+            print(ConUtils.colorizeText("REQUEST —————> " + e["_resourceType"] + " :", fgColors.YELLOW))
         print("    Cookies count: " + str(len(req["cookies"])))
         print("    Headers count: " + str(len(req["headers"])))
         print("    Headers size: " + humanize.naturalsize(req["headersSize"]))
@@ -153,8 +156,8 @@ class Context:
             print(ConUtils.shorten(ConUtils.prettyContent(req["queryString"]), self.truncateContent))
 
         print("")
-        print("RESPONSE <————— " + res["content"]["mimeType"] +":")
-        print("    Status: " + str(status))
+        print(ConUtils.colorizeText("RESPONSE <————— " + res["content"]["mimeType"] +":", fgColors.YELLOW))
+        print("    Status: " + ConUtils.colorizeStatusCode(status))
         if (status != 0):
             print("    Cookies count: " + str(len(res["cookies"])))
             print("    Headers count: " + str(len(res["headers"])))
@@ -174,7 +177,7 @@ class Context:
 
         if (e["_resourceType"] == "websocket"):
             print("")
-            print("WEBSOCKET:")
+            print(ConUtils.colorizeText("WEBSOCKET:", fgColors.YELLOW))
             print(ConUtils.shorten(ConUtils.prettyContent(e["_webSocketMessages"]), self.truncateContent))
 
     def printRequests(self, har, resType, reqType, filter):
@@ -207,37 +210,14 @@ class Context:
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
             urlShorten = ConUtils.shorten(url, self.urlMaxLength)
-
-            if (e["_resourceType"] == "xhr"):
-                urlShorten = fgColors.BLUE + urlShorten + fgColors.ENDC
-            # elif (e["_resourceType"] == "script"):
-            #     urlShorten = fgColors.YELLOW + urlShorten + fgColors.ENDC
-            elif (e["_resourceType"] == "document"):
-                urlShorten = fgColors.PURPLE + urlShorten + fgColors.ENDC
-            elif (e["_resourceType"] == "websocket"):
-                urlShorten = fgColors.CYAN + urlShorten + fgColors.ENDC
-            # elif (e["_resourceType"] == "image"):
-            #     urlShorten = fgColors.GREEN + urlShorten + fgColors.ENDC
-            # elif (e["_resourceType"] == "stylesheet" or e["_resourceType"] == "font"):
-            #     urlShorten = fgColors.RED + urlShorten + fgColors.ENDC
+            urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, e["_resourceType"],)
 
             time = int(e["time"])
             if (time > 10000):
                 time = ">9999"
 
-            if ("_fromCache" in e):
-                time = fgColors.GRAYUNDERLINE + str(time) + fgColors.ENDC
-
-            statusCode = int(e["response"]["status"])
-
-            if (statusCode >= 200 and statusCode < 300):
-                statusCode = fgColors.GREEN + str(statusCode) + fgColors.ENDC
-            elif (statusCode >= 300 and statusCode < 400):
-                statusCode = fgColors.YELLOW + str(statusCode) + fgColors.ENDC
-            elif (statusCode >= 400 and statusCode < 500):
-                statusCode = fgColors.PURPLE + str(statusCode) + fgColors.ENDC
-            elif (statusCode >= 500 or statusCode == 0):
-                statusCode = fgColors.RED + str(statusCode) + fgColors.ENDC
+            time = ConUtils.colorizeExecutionTime(time, "_fromCache" in e)
+            statusCode = ConUtils.colorizeStatusCode(int(e["response"]["status"]))
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
                 (reqType == "all" or e["request"]["method"].lower() == reqType) and
