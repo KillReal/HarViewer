@@ -32,7 +32,6 @@ def main(harFilePath, resType, reqType, width, filter):
         print("")
 
         if (inp == "list" or inp == "l" or inp == ""):
-            print(selectedRequestId)
             if (selectedRequestId > 0):
                 context.printRequestDetail(selectedRequestId)
                 selectedRequestId = -1
@@ -73,7 +72,6 @@ def main(harFilePath, resType, reqType, width, filter):
             if (inp.isdecimal()):
                 context.printRequestDetail(int(inp))
                 selectedRequestId = int(inp)
-                print(selectedRequestId)
             else:
                 if (inp == "n"):
                     context.printNextRequestDetail()
