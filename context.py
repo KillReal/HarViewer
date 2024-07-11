@@ -18,14 +18,24 @@ class Context:
     def calculateScreenWidthLimits(self, maxScreenWidth):
         maxScreenWidth -= self.calculateMaxTableWidth()
 
-        print(maxScreenWidth)
-
         self.urlMaxLength = int(int(maxScreenWidth) * 0.65)
         self.waterfallMaxLength = int(int(maxScreenWidth) * 0.35)
 
         if (self.urlMaxLength > 120):
             self.waterfallMaxLength += self.urlMaxLength - 120
             self.urlMaxLength = 120
+        
+        maxUrlWidth = self.calculateMaxTableUrlWidth()
+        totalWidth = maxUrlWidth + self.waterfallMaxLength
+        emptySpace = maxScreenWidth - totalWidth
+
+        if (emptySpace > 0):
+            emptySpace = maxScreenWidth - totalWidth
+            diff = 120 - maxUrlWidth
+            if (diff > emptySpace - 1):
+                diff = emptySpace - 1
+
+            self.waterfallMaxLength += diff
 
     def calculateMaxTableWidth(self):
         maxIdWidth = len(str(len(self.entries)))
@@ -37,6 +47,29 @@ class Context:
         maxTimeWidth = len(str(maxEntry["time"]))
 
         return maxIdWidth + maxRequestTypeWidth + maxTimeWidth + self.defaultStaticTableWidth
+    
+    def calculateMaxTableUrlWidth(self):
+        maxUrlLen = 0
+        hosts = []
+        for id, e in enumerate(self.entries):
+            url = e["request"]["url"]
+            host = ConUtils.copyHostFromUrl(url)
+
+            if (host != ""):
+                if (host not in hosts):
+                    hostPlaceholder = "{" + str(len(hosts) + 1) + "}"
+                    hosts.append(str(host))
+                else:
+                    hostPlaceholder = "{" + str(hosts.index(host) + 1) + "}"
+                url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
+
+            url = ConUtils.shorten(url, self.urlMaxLength)
+
+            if (maxUrlLen < len(url)):
+                maxUrlLen = len(url)
+
+        print("max url found = " + str(maxUrlLen))
+        return maxUrlLen
 
     def makeWaterfall(self, startTime, completeTime, timings):
         step = completeTime / self.waterfallMaxLength

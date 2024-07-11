@@ -14,14 +14,14 @@ def main(harFilePath, resType, reqType, conWidth, filter):
     har = json.loads(jsonContent)
     context = Context(har, conWidth)
 
-    #ConUtils.clear()
+    ConUtils.clear()
     context.printRequests(resType, reqType, filter)
     selectedRequestId = -1
 
     while (1):
         print("")
         inp = input("CMD >>: ")
-        #ConUtils.clear()
+        ConUtils.clear()
         print("")
 
         if (inp == "list" or inp == "l" or inp == ""):
