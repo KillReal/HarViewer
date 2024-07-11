@@ -5,6 +5,14 @@ import os
 from conUtils import ConUtils
 from context import Context
 
+def inputCMD():
+    print("")
+    inp = input("CMD >>: ")
+    ConUtils.clear()
+    print("")
+
+    return inp
+
 def main(harFilePath, resType, reqType, conWidth, filter):
     if (conWidth == "auto"):
         conWidth = os.get_terminal_size()[0]
@@ -16,37 +24,19 @@ def main(harFilePath, resType, reqType, conWidth, filter):
 
     ConUtils.clear()
     context.printRequests(resType, reqType, filter)
-    selectedRequestId = -1
 
+    selectedRequestId = -1
+    isNeedRestoreRequestDetails = True
     while (1):
-        print("")
-        inp = input("CMD >>: ")
-        ConUtils.clear()
-        print("")
+        inp = inputCMD()
 
         if (inp == "list" or inp == "l" or inp == ""):
-            if (selectedRequestId > 0):
+            if (selectedRequestId >= 0 and isNeedRestoreRequestDetails):
                 context.printRequestDetail(selectedRequestId)
-                selectedRequestId = -1
+                isNeedRestoreRequestDetails = False
             else:
-                context.printRequests(resType, reqType, filter)
                 selectedRequestId = -1
-        elif (inp == "cookies" or inp == "c"):
-            context.printCookies()
-        elif (inp == "headers" or inp == "h"):
-            context.printHeaders()
-        elif (inp == "request" or inp == "req"):
-            context.requestContent()
-        elif (inp == "response" or inp == "res"):
-            context.responseContent()
-        elif (inp == "websocket" or inp == "w"):
-            context.websocketContent()
-        elif (inp == "crequest" or inp == "creq"):
-            context.copyRequestContent()
-        elif (inp == "cresponse" or inp == "cres"):
-            context.copyResponseContent()
-        elif (inp == "cwebsocket" or inp == "cw"):
-            context.copyWebsocketContent()
+                context.printRequests(resType, reqType, filter)
         elif (inp == "exit" or inp == "e"):
             exit(0)
         elif (inp == "help" or inp == "!help" or inp == "!h"):
@@ -61,18 +51,46 @@ def main(harFilePath, resType, reqType, conWidth, filter):
             print("     (cres)ponse -  copy to clipboard response content from latest selected request")
             print("     (cw)ebsocket - copy to clipboard websocket content from latest selected request")
             print("     (e)xit - exit from app")
+        elif (inp == "n"):
+            selectedRequestId += 1
+            context.printNextRequestDetail()
+        elif (inp == "p"):
+            selectedRequestId -= 1
+            context.printPrevRequestDetail()
+        elif (inp == "cookies" or inp == "c"):
+            isNeedRestoreRequestDetails = True
+            context.printCookies()
+        elif (inp == "headers" or inp == "h"):
+            isNeedRestoreRequestDetails = True
+            context.printHeaders()
+        elif (inp == "request" or inp == "req"):
+            isNeedRestoreRequestDetails = True
+            context.requestContent()
+        elif (inp == "response" or inp == "res"):
+            isNeedRestoreRequestDetails = True
+            context.responseContent()
+        elif (inp == "websocket" or inp == "w"):
+            isNeedRestoreRequestDetails = True
+            context.websocketContent()
+        elif (inp == "crequest" or inp == "creq"):
+            isNeedRestoreRequestDetails = True
+            context.copyRequestContent()
+        elif (inp == "cresponse" or inp == "cres"):
+            isNeedRestoreRequestDetails = True
+            context.copyResponseContent()
+        elif (inp == "cwebsocket" or inp == "cw"):
+            isNeedRestoreRequestDetails = True
+            context.copyWebsocketContent()
         else:
             if (inp.isdecimal()):
-                context.printRequestDetail(int(inp))
                 selectedRequestId = int(inp)
+                context.printRequestDetail(int(inp))
             else:
-                if (inp == "n"):
-                    context.printNextRequestDetail()
-                elif (inp == "p"):
-                    context.printPrevRequestDetail()
-                else:
-                    print("Showing requests that contains <" + inp + "> in url...")
-                    context.printRequests(har, resType, reqType, inp)
+                print("Showing requests that contains <" + inp + "> in url...")
+                context.printRequests(resType, reqType, inp)
+
+                
+               
 
 if __name__ == '__main__':
     import argparse
