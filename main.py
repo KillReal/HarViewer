@@ -5,31 +5,23 @@ import os
 from conUtils import ConUtils
 from context import Context
 
-def main(harFilePath, resType, reqType, width, filter):
-    if (width == "auto"):
-        width = os.get_terminal_size()[0] - 33
-
-    urlMaxLength = int(int(width) * 0.65)
-    waterfallMaxLength = int(int(width) * 0.35)
-
-    if (urlMaxLength > 120):
-        waterfallMaxLength += urlMaxLength - 120
-        urlMaxLength = 120
+def main(harFilePath, resType, reqType, conWidth, filter):
+    if (conWidth == "auto"):
+        conWidth = os.get_terminal_size()[0]
 
     f = codecs.open(harFilePath, "r", "utf-8")
     jsonContent = f.read()
     har = json.loads(jsonContent)
+    context = Context(har, conWidth)
 
-    context = Context(urlMaxLength, waterfallMaxLength)
-
-    ConUtils.clear()
-    context.printRequests(har, resType, reqType, filter)
+    #ConUtils.clear()
+    context.printRequests(resType, reqType, filter)
     selectedRequestId = -1
 
     while (1):
         print("")
         inp = input("CMD >>: ")
-        ConUtils.clear()
+        #ConUtils.clear()
         print("")
 
         if (inp == "list" or inp == "l" or inp == ""):
@@ -37,7 +29,7 @@ def main(harFilePath, resType, reqType, width, filter):
                 context.printRequestDetail(selectedRequestId)
                 selectedRequestId = -1
             else:
-                context.printRequests(har, resType, reqType, filter)
+                context.printRequests(resType, reqType, filter)
                 selectedRequestId = -1
         elif (inp == "cookies" or inp == "c"):
             context.printCookies()
@@ -97,4 +89,4 @@ if __name__ == '__main__':
                         help='Set display width in units (default is auto)', default="")
     args = parser.parse_args()
 
-    main(harFilePath=args.s, resType=args.t, reqType=args.r, width=args.w, filter=args.f)
+    main(harFilePath=args.s, resType=args.t, reqType=args.r, conWidth=args.w, filter=args.f)

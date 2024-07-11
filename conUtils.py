@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import re
@@ -19,15 +20,15 @@ class fgColors:
 
 class ConUtils:
     @staticmethod
-    def shorten(s, width, placeholder='...'):
-        return s[:width] if len(s) <= width else s[:width-len(placeholder)] + placeholder
+    def shorten(text: str, width: int, placeholder: str = '...'):
+        return text[:width] if len(text) <= width else text[:width-len(placeholder)] + placeholder
 
     @staticmethod
-    def timeToMs(timestamp):
+    def timeToMs(timestamp: datetime):
         return timestamp.total_seconds() * 1000
     
     @staticmethod   
-    def prettyContent(content):
+    def prettyContent(content: str):
         try:
             content = json.loads(content)
         except:
@@ -35,11 +36,11 @@ class ConUtils:
         return json.dumps(content, indent = 4)
 
     @staticmethod
-    def prettyJson(content):
+    def prettyJson(content: str):
         return json.dumps(content, indent = 4)
     
     @staticmethod
-    def copyHostFromUrl(url):
+    def copyHostFromUrl(url: str):
         urlRegex = "(.*://[A-Za-z_0-9.:-]+).*"
 
         m = re.search(urlRegex, url)
@@ -48,7 +49,7 @@ class ConUtils:
         return ""
 
     @staticmethod
-    def replaceHostInUrl(url, domain, placeholder = "{host}"):
+    def replaceHostInUrl(url: str, domain: str, placeholder: str = "{host}"):
         return url.replace(domain, placeholder)
 
     @staticmethod 
@@ -69,7 +70,7 @@ class ConUtils:
         return statusCode
     
     @staticmethod
-    def colorizeUrlByResourceType(url, resType):
+    def colorizeUrlByResourceType(url: str, resType: str):
         if (resType == "xhr"):
             url = fgColors.BLUE + url + fgColors.ENDC
         # elif (resType == "script"):
@@ -89,6 +90,8 @@ class ConUtils:
     def colorizeExecutionTime(time: int, isCached: bool):
         if (isCached):
             return fgColors.GRAYUNDERLINE + str(time) + fgColors.ENDC
+        else:
+            return str(time)
         
     @staticmethod
     def colorizeText(text: str, color: fgColors):

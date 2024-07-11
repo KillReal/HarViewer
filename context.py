@@ -7,13 +7,36 @@ import json
 from datetime import datetime, timedelta
 
 class Context:
-    def __init__(self, urlMaxLength, waterfallMaxLength):
-        self.urlMaxLength = urlMaxLength
-        self.waterfallMaxLength = waterfallMaxLength
-        self.entries = []
+    def __init__(self, har, conWidth: int):
+        self.entries = har["log"]["entries"]
         self.lastEntry = {}
         self.lastShowedIds = []
         self.truncateContent = 500
+        self.defaultStaticTableWidth = 7
+        self.calculateScreenWidthLimits(conWidth)
+
+    def calculateScreenWidthLimits(self, maxScreenWidth):
+        maxScreenWidth -= self.calculateMaxTableWidth()
+
+        print(maxScreenWidth)
+
+        self.urlMaxLength = int(int(maxScreenWidth) * 0.65)
+        self.waterfallMaxLength = int(int(maxScreenWidth) * 0.35)
+
+        if (self.urlMaxLength > 120):
+            self.waterfallMaxLength += self.urlMaxLength - 120
+            self.urlMaxLength = 120
+
+    def calculateMaxTableWidth(self):
+        maxIdWidth = len(str(len(self.entries)))
+
+        maxEntry = max(self.entries, key=lambda x: len(x["request"]["method"]))
+        maxRequestTypeWidth = len(maxEntry["request"]["method"])
+
+        maxEntry = max(self.entries, key=lambda x: len(str(x["time"])))
+        maxTimeWidth = len(str(maxEntry["time"]))
+
+        return maxIdWidth + maxRequestTypeWidth + maxTimeWidth + self.defaultStaticTableWidth
 
     def makeWaterfall(self, startTime, completeTime, timings):
         step = completeTime / self.waterfallMaxLength
@@ -180,9 +203,7 @@ class Context:
             print(ConUtils.colorizeText("WEBSOCKET:", fgColors.YELLOW))
             print(ConUtils.shorten(ConUtils.prettyContent(e["_webSocketMessages"]), self.truncateContent))
 
-    def printRequests(self, har, resType, reqType, filter):
-        self.entries = har["log"]["entries"]
-
+    def printRequests(self, resType, reqType, filter):
         initTime = datetime.fromisoformat(self.entries[0]["startedDateTime"])
         latestEntry = max(self.entries, key=lambda x: int(ConUtils.timeToMs(datetime.fromisoformat(x["startedDateTime"]) - initTime)
             + x["time"]))
@@ -194,7 +215,7 @@ class Context:
         hostPlaceholder = "{" + str(len(hosts) + 1) + "}"
 
         self.lastShowedIds = []
-        t = PrettyTable(['Id', 'Req', 'Res', 'Url', "Time ", "Waterfall"])
+        t = PrettyTable(['Id', 'Req', 'Res', 'Url', "Time", "Waterfall"])
         t.align = "l"
         for id, e in enumerate(self.entries):
             startTime = ConUtils.timeToMs(datetime.fromisoformat(e["startedDateTime"]) - initTime)
@@ -212,11 +233,7 @@ class Context:
             urlShorten = ConUtils.shorten(url, self.urlMaxLength)
             urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, e["_resourceType"],)
 
-            time = int(e["time"])
-            if (time > 10000):
-                time = ">9999"
-
-            time = ConUtils.colorizeExecutionTime(time, "_fromCache" in e)
+            time = ConUtils.colorizeExecutionTime(int(e["time"]), "_fromCache" in e)
             statusCode = ConUtils.colorizeStatusCode(int(e["response"]["status"]))
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
