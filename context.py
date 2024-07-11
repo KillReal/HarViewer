@@ -224,10 +224,21 @@ class Context:
             if ("_fromCache" in e):
                 time = fgColors.GRAYUNDERLINE + str(time) + fgColors.ENDC
 
+            statusCode = int(e["response"]["status"])
+
+            if (statusCode >= 200 and statusCode < 300):
+                statusCode = fgColors.GREEN + str(statusCode) + fgColors.ENDC
+            elif (statusCode >= 300 and statusCode < 400):
+                statusCode = fgColors.YELLOW + str(statusCode) + fgColors.ENDC
+            elif (statusCode >= 400 and statusCode < 500):
+                statusCode = fgColors.PURPLE + str(statusCode) + fgColors.ENDC
+            elif (statusCode >= 500 or statusCode == 0):
+                statusCode = fgColors.RED + str(statusCode) + fgColors.ENDC
+
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
                 (reqType == "all" or e["request"]["method"].lower() == reqType) and
                 (filter == "" or (filter.lower() in url.lower()))):
-                t.add_row([id, e["request"]["method"], e["response"]["status"],
+                t.add_row([id, e["request"]["method"], statusCode,
                     urlShorten, time,
                     self.makeWaterfall(startTime, completeTime, e["timings"])])
                 self.lastShowedIds.append(id)
