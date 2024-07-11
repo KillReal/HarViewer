@@ -98,6 +98,10 @@ class Context:
         self.printRequestDetail(self.lastShowedIds[nextId])
 
     def printRequestDetail(self, id):
+        if (id < 0 or id >= len(self.entries)):
+            print("Invalid request id")
+            return
+        
         e = self.entries[id]
         self.lastEntry = e
         req = e["request"]
