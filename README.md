@@ -8,6 +8,9 @@ You can view overall requests stats:
 And then see details for certain request:
 ![detail](/request-detail.png)
 
+To see available commands print `help`:
+![help](/help.png)
+
 # Usage
 
 `python3 main.py -s ./localhost.har`
