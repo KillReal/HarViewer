@@ -3,7 +3,7 @@ import codecs
 import os
 
 from conUtils import ConUtils
-from context import Context
+from harViewer import HarViewer
 
 def inputCMD():
     print("")
@@ -20,10 +20,10 @@ def main(harFilePath, resType, reqType, conWidth, filter):
     f = codecs.open(harFilePath, "r", "utf-8")
     jsonContent = f.read()
     har = json.loads(jsonContent)
-    context = Context(har, conWidth)
+    harViewer = HarViewer(har, conWidth)
 
     ConUtils.clear()
-    context.printRequests(resType, reqType, filter)
+    harViewer.printRequestsTable(resType, reqType, filter)
 
     selectedRequestId = -1
     isNeedRestoreRequestDetails = True
@@ -32,65 +32,65 @@ def main(harFilePath, resType, reqType, conWidth, filter):
 
         if (inp == "list" or inp == "l" or inp == ""):
             if (selectedRequestId >= 0 and isNeedRestoreRequestDetails):
-                context.printRequestDetail(selectedRequestId)
+                harViewer.printRequestDetails(selectedRequestId)
                 isNeedRestoreRequestDetails = False
             else:
                 selectedRequestId = -1
-                context.printRequests(resType, reqType, filter)
+                harViewer.printRequestsTable(resType, reqType, filter)
         elif (inp == "exit" or inp == "e"):
             exit(0)
         elif (inp == "help" or inp == "!help" or inp == "!h"):
-            print("This is a CMD help:")
-            print("     <Id> - print request details with certain Id from table above")
-            print("     <EMPTY> or <SEARCH PATTERN> - print all requests or request that contains <SEARCH PATTERN> in url")
-            print("     (c)ookie - print cookies for latest selected request")
-            print("     (req)uest - prin request content from latest selected request")
-            print("     (res)ponse -  print response content from latest selected request")
-            print("     (w)ebsocket - print websocket content from latest selected request")
-            print("     (creq)uest - copy to clipboard request content from latest selected request")
-            print("     (cres)ponse -  copy to clipboard response content from latest selected request")
-            print("     (cw)ebsocket - copy to clipboard websocket content from latest selected request")
-            print("     (e)xit - exit from app")
+            PrintHelp()
         elif (inp == "n"):
             selectedRequestId += 1
-            context.printNextRequestDetail()
+            harViewer.printNextRequestDetail()
         elif (inp == "p"):
             selectedRequestId -= 1
-            context.printPrevRequestDetail()
+            harViewer.printPrevRequestDetail()
         elif (inp == "cookies" or inp == "c"):
             isNeedRestoreRequestDetails = True
-            context.printCookies()
+            harViewer.printCookies()
         elif (inp == "headers" or inp == "h"):
             isNeedRestoreRequestDetails = True
-            context.printHeaders()
+            harViewer.printHeaders()
         elif (inp == "request" or inp == "req"):
             isNeedRestoreRequestDetails = True
-            context.requestContent()
+            harViewer.printRequestContent()
         elif (inp == "response" or inp == "res"):
             isNeedRestoreRequestDetails = True
-            context.responseContent()
+            harViewer.printResponseContent()
         elif (inp == "websocket" or inp == "w"):
             isNeedRestoreRequestDetails = True
-            context.websocketContent()
+            harViewer.printWebsocketContent()
         elif (inp == "crequest" or inp == "creq"):
             isNeedRestoreRequestDetails = True
-            context.copyRequestContent()
+            harViewer.copyRequestContent()
         elif (inp == "cresponse" or inp == "cres"):
             isNeedRestoreRequestDetails = True
-            context.copyResponseContent()
+            harViewer.copyResponseContent()
         elif (inp == "cwebsocket" or inp == "cw"):
             isNeedRestoreRequestDetails = True
-            context.copyWebsocketContent()
+            harViewer.copyWebsocketContent()
         else:
             if (inp.isdecimal()):
                 selectedRequestId = int(inp)
-                context.printRequestDetail(int(inp))
+                harViewer.printRequestDetails(selectedRequestId)
             else:
                 print("Showing requests that contains <" + inp + "> in url...")
-                context.printRequests(resType, reqType, inp)
+                harViewer.printRequestsTable(resType, reqType, inp)
 
-                
-               
+def PrintHelp():
+    print("This is a CMD help:")
+    print("     <Id> - print request details with certain Id from table above")
+    print("     <EMPTY> or <SEARCH PATTERN> - print all requests or request that contains <SEARCH PATTERN> in url")
+    print("     (c)ookie - print cookies for latest selected request")
+    print("     (req)uest - prin request content from latest selected request")
+    print("     (res)ponse -  print response content from latest selected request")
+    print("     (w)ebsocket - print websocket content from latest selected request")
+    print("     (creq)uest - copy to clipboard request content from latest selected request")
+    print("     (cres)ponse -  copy to clipboard response content from latest selected request")
+    print("     (cw)ebsocket - copy to clipboard websocket content from latest selected request")
+    print("     (e)xit - exit from app")    
 
 if __name__ == '__main__':
     import argparse

@@ -6,10 +6,10 @@ from prettytable import PrettyTable
 import json
 from datetime import datetime, timedelta
 
-class Context:
+class HarViewer:
     def __init__(self, har, conWidth: int):
         self.entries = har["log"]["entries"]
-        self.lastEntry = {}
+        self.selectedEntry = {}
         self.lastShowedIds = []
         self.truncateContent = 500
         self.defaultStaticTableWidth = 7
@@ -51,9 +51,9 @@ class Context:
     def calculateMaxTableUrlWidth(self):
         maxUrlLen = 0
         hosts = []
-        for id, e in enumerate(self.entries):
+        for e in self.entries:
             url = e["request"]["url"]
-            host = ConUtils.copyHostFromUrl(url)
+            host = ConUtils.selectHostFromUrl(url)
 
             if (host != ""):
                 if (host not in hosts):
@@ -64,11 +64,11 @@ class Context:
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
             url = ConUtils.shorten(url, self.urlMaxLength)
+            urlLen = len(url)
 
-            if (maxUrlLen < len(url)):
-                maxUrlLen = len(url)
+            if (maxUrlLen < urlLen):
+                maxUrlLen = urlLen
 
-        print("max url found = " + str(maxUrlLen))
         return maxUrlLen
 
     def makeWaterfall(self, startTime, completeTime, timings):
@@ -102,66 +102,67 @@ class Context:
         return False
 
     def printCookies(self):
-        if (self.lastEntry == {}):
+        if (self.selectedEntry == {}):
             print("No cookie content available")
             return
 
         print(" ")
         print(fgColors.YELLOW + "REQUEST —————> Cookies: " + fgColors.ENDC)
-        print(ConUtils.prettyContent(self.lastEntry["request"]["cookies"]))
+        print(ConUtils.prettyContent(self.selectedEntry["request"]["cookies"]))
         print(" ")
         print(fgColors.YELLOW + "RESPONSE <————— Cookies: " + fgColors.ENDC)
-        print(ConUtils.prettyContent(self.lastEntry["response"]["cookies"]))
+        print(ConUtils.prettyContent(self.selectedEntry["response"]["cookies"]))
 
     def printHeaders(self):
-        if (self.lastEntry == {}):
+        if (self.selectedEntry == {}):
             print("No header content available")
             return
 
         print(" ")
         print(fgColors.YELLOW + "REQUEST —————> Headers: " + fgColors.ENDC)
-        print(json.dumps(self.lastEntry["request"]["headers"], indent = 4))
+        print(json.dumps(self.selectedEntry["request"]["headers"], indent = 4))
         print(" ")
         print(fgColors.YELLOW + "RESPONSE <————— Headers: "+ fgColors.ENDC)
-        print(json.dumps(self.lastEntry["response"]["headers"], indent = 4))
+        print(json.dumps(self.selectedEntry["response"]["headers"], indent = 4))
 
     def printNextRequestDetail(self):
-        if (self.lastEntry == {}):
+        if (self.selectedEntry == {}):
             print("No next request available")
             return
         
-        id = self.entries.index(self.lastEntry)
+        id = self.entries.index(self.selectedEntry)
         nextId = self.lastShowedIds.index(id) + 1
 
         if (nextId >= len(self.lastShowedIds)):
             print("No next request available")
             return
 
-        self.printRequestDetail(self.lastShowedIds[nextId])
+        self.printRequestDetails(self.lastShowedIds[nextId])
     
     def printPrevRequestDetail(self):
-        if (self.lastEntry == {}):
+        if (self.selectedEntry == {}):
             print("No next request available")
             return
         
-        id = self.entries.index(self.lastEntry)
+        id = self.entries.index(self.selectedEntry)
         nextId = self.lastShowedIds.index(id) - 1
         
         if (nextId < 0):
             print("No previous request available")
             return
 
-        self.printRequestDetail(self.lastShowedIds[nextId])
+        self.printRequestDetails(self.lastShowedIds[nextId])
 
-    def printRequestDetail(self, id):
+    def printRequestDetails(self, id):
         if (id < 0 or id >= len(self.entries)):
             print("Invalid request id")
             return
         
         e = self.entries[id]
-        self.lastEntry = e
+        self.selectedEntry = e
         req = e["request"]
         res = e["response"]
+        timings = e["timings"]
 
         status: int = e["response"]["status"]
         method = req["method"]
@@ -177,21 +178,21 @@ class Context:
         if ("_fromCache" in e):
             print("Cached: " + e["_fromCache"])
         print("Timestamp: " + e["startedDateTime"])
-        print("Timing: "+ self.makeWaterfall(startTime, endTime, e["timings"]) +
+        print("Timing: "+ self.makeWaterfall(startTime, endTime, timings) +
             " (" + str(int(e["time"])) +" ms)")
-        if (int(e["timings"]["_blocked_queueing"]) > 0):
-            print("    queued  ( ): " + str(int(e["timings"]["_blocked_queueing"])) + " ms")
-        if (int(e["timings"]["blocked"]) > 0):
-            print("    blocked (-): " + str(int(e["timings"]["blocked"])) + " ms")
-        if (int(e["timings"]["dns"]) > 0):
-            print("    dns    : " + str(int(e["timings"]["dns"])) + " ms")
-        if (int(e["timings"]["ssl"]) > 0):
-            print("    ssl    : " + str(int(e["timings"]["ssl"])) + " ms")
-        if (int(e["timings"]["connect"]) > 0):
-            print("    connect    : " + str(int(e["timings"]["connect"])) + " ms")
-        print("    send    (↑): " + str(int(e["timings"]["send"])) + " ms")
-        print("    wait    (#): " + str(int(e["timings"]["wait"])) + " ms")
-        print("    receive (↓): " + str(int(e["timings"]["receive"])) + " ms")
+        if (int(timings["_blocked_queueing"]) > 0):
+            print("    queued  ( ): " + str(int(timings["_blocked_queueing"])) + " ms")
+        if (int(timings["blocked"]) > 0):
+            print("    blocked (-): " + str(int(timings["blocked"])) + " ms")
+        if (int(timings["dns"]) > 0):
+            print("    dns    : " + str(int(timings["dns"])) + " ms")
+        if (int(timings["ssl"]) > 0):
+            print("    ssl    : " + str(int(timings["ssl"])) + " ms")
+        if (int(timings["connect"]) > 0):
+            print("    connect    : " + str(int(timings["connect"])) + " ms")
+        print("    send    (↑): " + str(int(timings["send"])) + " ms")
+        print("    wait    (#): " + str(int(timings["wait"])) + " ms")
+        print("    receive (↓): " + str(int(timings["receive"])) + " ms")
         print("")
         if (self.isHasBody(req)):
             print(ConUtils.colorizeText("REQUEST —————> " + req["postData"]["mimeType"] + ": ", fgColors.YELLOW))
@@ -236,7 +237,7 @@ class Context:
             print(ConUtils.colorizeText("WEBSOCKET:", fgColors.YELLOW))
             print(ConUtils.shorten(ConUtils.prettyContent(e["_webSocketMessages"]), self.truncateContent))
 
-    def printRequests(self, resType, reqType, filter):
+    def printRequestsTable(self, resType, reqType, filter):
         initTime = datetime.fromisoformat(self.entries[0]["startedDateTime"])
         latestEntry = max(self.entries, key=lambda x: int(ConUtils.timeToMs(datetime.fromisoformat(x["startedDateTime"]) - initTime)
             + x["time"]))
@@ -253,7 +254,10 @@ class Context:
         for id, e in enumerate(self.entries):
             startTime = ConUtils.timeToMs(datetime.fromisoformat(e["startedDateTime"]) - initTime)
             url = e["request"]["url"]
-            host = ConUtils.copyHostFromUrl(url)
+            host = ConUtils.selectHostFromUrl(url)
+            req = e["request"]
+            res = e["response"]
+            timings = e["timings"]
 
             if (host != ""):
                 if (host not in hosts):
@@ -264,17 +268,16 @@ class Context:
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
             urlShorten = ConUtils.shorten(url, self.urlMaxLength)
-            urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, e["_resourceType"],)
+            urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, e["_resourceType"])
 
             time = ConUtils.colorizeExecutionTime(int(e["time"]), "_fromCache" in e)
             statusCode = ConUtils.colorizeStatusCode(int(e["response"]["status"]))
+            waterfall = self.makeWaterfall(startTime, completeTime, timings)
 
             if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
-                (reqType == "all" or e["request"]["method"].lower() == reqType) and
+                (reqType == "all" or req["method"].lower() == reqType) and
                 (filter == "" or (filter.lower() in url.lower()))):
-                t.add_row([id, e["request"]["method"], statusCode,
-                    urlShorten, time,
-                    self.makeWaterfall(startTime, completeTime, e["timings"])])
+                t.add_row([id, req["method"], statusCode, urlShorten, time, waterfall])
                 self.lastShowedIds.append(id)
         print(t)
 
@@ -285,62 +288,64 @@ class Context:
         print("Total recorded time: " + str(completeTimeHumanized) + " (" + str(completeTime) + " ms)")
 
     def copyRequestContent(self):
-        if (self.lastEntry == {}):
+        if (self.selectedEntry == {}):
             print("No request content available")
+            return
 
-        method = self.lastEntry["request"]["method"]
-        if ((method == "POST" or method == "PUT" or method == "DELETE") and self.lastEntry["request"]["bodySize"] > 0):
-            if (self.lastEntry["request"]["postData"]["mimeType"] == "application/json"):
-                pyperclip.copy(ConUtils.prettyContent(self.lastEntry["request"]["postData"]["text"]))
+        method = self.selectedEntry["request"]["method"]
+        if ((method == "POST" or method == "PUT" or method == "DELETE") and self.selectedEntry["request"]["bodySize"] > 0):
+            if (self.selectedEntry["request"]["postData"]["mimeType"] == "application/json"):
+                pyperclip.copy(ConUtils.prettyContent(self.selectedEntry["request"]["postData"]["text"]))
             else:
-                pyperclip.copy(ConUtils.prettyContent(self.lastEntry["request"]["postData"]["params"]))
+                pyperclip.copy(ConUtils.prettyContent(self.selectedEntry["request"]["postData"]["params"]))
             print("Request content copyied to clipboard")
         else:
-            pyperclip.copy(ConUtils.prettyContent(self.lastEntry["request"]["queryString"]))
+            pyperclip.copy(ConUtils.prettyContent(self.selectedEntry["request"]["queryString"]))
 
     def copyResponseContent(self):
-        if (self.lastEntry != {} and self.lastEntry["response"]["content"]["size"] > 0):
-            text = ConUtils.prettyContent(self.lastEntry["response"]["content"]["text"])
+        if (self.selectedEntry != {} and self.selectedEntry["response"]["content"]["size"] > 0):
+            text = ConUtils.prettyContent(self.selectedEntry["response"]["content"]["text"])
             pyperclip.copy(text)
             print("Response content copyied to clipboard")
         else:
             print("No response content available")
 
     def copyWebsocketContent(self):
-        if (self.lastEntry != {} and self.lastEntry["_resourceType"] == "websocket"):
+        if (self.selectedEntry != {} and self.selectedEntry["_resourceType"] == "websocket"):
             print("WebSocket content copyied to clipboard")
-            pyperclip.copy(ConUtils.prettyContent(self.lastEntry["_webSocketMessages"]))
+            pyperclip.copy(ConUtils.prettyContent(self.selectedEntry["_webSocketMessages"]))
         else:
             print("No WebSocket content available")
 
-    def requestContent(self):
-        if (self.lastEntry == {}):
+    def printRequestContent(self):
+        if (self.selectedEntry == {}):
             print("No request content available")
+            return
 
         res = ""
         print("Request content:")
 
-        method = self.lastEntry["request"]["method"]
-        if ((method == "POST" or method == "PUT" or method == "DELETE") and self.lastEntry["request"]["bodySize"] > 0):
-            if (self.lastEntry["request"]["postData"]["mimeType"] == "application/json"):
-                res = ConUtils.prettyContent(self.lastEntry["request"]["postData"]["text"])
+        method = self.selectedEntry["request"]["method"]
+        if ((method == "POST" or method == "PUT" or method == "DELETE") and self.selectedEntry["request"]["bodySize"] > 0):
+            if (self.selectedEntry["request"]["postData"]["mimeType"] == "application/json"):
+                res = ConUtils.prettyContent(self.selectedEntry["request"]["postData"]["text"])
             else:
-                res = ConUtils.prettyContent(self.lastEntry["request"]["postData"]["params"])
+                res = ConUtils.prettyContent(self.selectedEntry["request"]["postData"]["params"])
             print(res)
         else:
-            print(ConUtils.prettyContent(self.lastEntry["request"]["queryString"]))
+            print(ConUtils.prettyContent(self.selectedEntry["request"]["queryString"]))
 
-    def responseContent(self):
-        if (self.lastEntry != {} and self.lastEntry["response"]["content"]["size"] > 0):
-            res = ConUtils.prettyContent(self.lastEntry["response"]["content"]["text"])
+    def printResponseContent(self):
+        if (self.selectedEntry != {} and self.selectedEntry["response"]["content"]["size"] > 0):
+            res = ConUtils.prettyContent(self.selectedEntry["response"]["content"]["text"])
             print("Response content:")
             print(res)
         else:
             print("No response content available")
 
-    def websocketContent(self):
-        if (self.lastEntry != {} and self.lastEntry["_resourceType"] == "websocket"):
+    def printWebsocketContent(self):
+        if (self.selectedEntry != {} and self.selectedEntry["_resourceType"] == "websocket"):
             print("Websocket content:")
-            print(ConUtils.prettyContent(self.lastEntry["_webSocketMessages"]))
+            print(ConUtils.prettyContent(self.selectedEntry["_webSocketMessages"]))
         else:
             print("No WebSocket content available")

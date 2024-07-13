@@ -40,7 +40,7 @@ class ConUtils:
         return json.dumps(content, indent = 4)
     
     @staticmethod
-    def copyHostFromUrl(url: str):
+    def selectHostFromUrl(url: str):
         urlRegex = "(.*://[A-Za-z_0-9.:-]+).*"
 
         m = re.search(urlRegex, url)
