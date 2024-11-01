@@ -12,7 +12,7 @@ class HarViewer:
         self.selectedEntry = {}
         self.lastShowedIds = []
         self.truncateContent = 500
-        self.defaultStaticTableWidth = 7
+        self.defaultStaticTableWidth = 22
         self.calculateScreenWidthLimits(conWidth)
 
     def calculateScreenWidthLimits(self, maxScreenWidth):
@@ -43,8 +43,8 @@ class HarViewer:
         maxEntry = max(self.entries, key=lambda x: len(x["request"]["method"]))
         maxRequestTypeWidth = len(maxEntry["request"]["method"])
 
-        maxEntry = max(self.entries, key=lambda x: len(str(x["time"])))
-        maxTimeWidth = len(str(maxEntry["time"]))
+        maxEntry = max(self.entries, key=lambda x: len(str(int(x["time"]))))
+        maxTimeWidth = len(str(int(maxEntry["time"])))
 
         return maxIdWidth + maxRequestTypeWidth + maxTimeWidth + self.defaultStaticTableWidth
     
@@ -100,6 +100,15 @@ class HarViewer:
         if ((method == "POST" or method == "PUT" or method == "DELETE") and request["bodySize"] > 0):
             return True
         return False
+    
+    def getResourceType(self, entry):
+        resourceType = "unknown"
+        request = entry["request"]
+        if (self.isHasBody(request)):
+            resourceType = request["postData"]["mimeType"]
+        elif ("_resourceType" in entry):
+            resourceType = entry["_resourceType"]
+        return resourceType
 
     def printCookies(self):
         if (self.selectedEntry == {}):
@@ -167,8 +176,10 @@ class HarViewer:
         status: int = e["response"]["status"]
         method = req["method"]
 
+        resourceType = self.getResourceType(e)
+
         statusCodeText = ConUtils.colorizeStatusCode(status)
-        urlText = ConUtils.colorizeUrlByResourceType(req["url"], e["_resourceType"])
+        urlText = ConUtils.colorizeUrlByResourceType(req["url"], resourceType)
 
         print("[" + str(id) + "] ——— " + statusCodeText + " " + method + " " + urlText)
         print("")
@@ -180,7 +191,7 @@ class HarViewer:
         print("Timestamp: " + e["startedDateTime"])
         print("Timing: "+ self.makeWaterfall(startTime, endTime, timings) +
             " (" + str(int(e["time"])) +" ms)")
-        if (int(timings["_blocked_queueing"]) > 0):
+        if ("_blocked_queueing" in timings and int(timings["_blocked_queueing"]) > 0):
             print("    queued  ( ): " + str(int(timings["_blocked_queueing"])) + " ms")
         if (int(timings["blocked"]) > 0):
             print("    blocked (-): " + str(int(timings["blocked"])) + " ms")
@@ -197,7 +208,7 @@ class HarViewer:
         if (self.isHasBody(req)):
             print(ConUtils.colorizeText("REQUEST —————> " + req["postData"]["mimeType"] + ": ", fgColors.YELLOW))
         else:
-            print(ConUtils.colorizeText("REQUEST —————> " + e["_resourceType"] + " :", fgColors.YELLOW))
+            print(ConUtils.colorizeText("REQUEST —————> " + resourceType + " :", fgColors.YELLOW))
         print("    Cookies count: " + str(len(req["cookies"])))
         print("    Headers count: " + str(len(req["headers"])))
         print("    Headers size: " + humanize.naturalsize(req["headersSize"]))
@@ -232,7 +243,7 @@ class HarViewer:
         else:
             print("    Error: " + res["_error"])
 
-        if (e["_resourceType"] == "websocket"):
+        if (resourceType == "websocket"):
             print("")
             print(ConUtils.colorizeText("WEBSOCKET:", fgColors.YELLOW))
             print(ConUtils.shorten(ConUtils.prettyContent(e["_webSocketMessages"]), self.truncateContent))
@@ -267,14 +278,16 @@ class HarViewer:
                     hostPlaceholder = "{" + str(hosts.index(host) + 1) + "}"
                 url = ConUtils.replaceHostInUrl(url, host, hostPlaceholder)
 
+            resourceType = self.getResourceType(e)
+
             urlShorten = ConUtils.shorten(url, self.urlMaxLength)
-            urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, e["_resourceType"])
+            urlShorten = ConUtils.colorizeUrlByResourceType(urlShorten, resourceType)
 
             time = ConUtils.colorizeExecutionTime(int(e["time"]), "_fromCache" in e)
             statusCode = ConUtils.colorizeStatusCode(int(e["response"]["status"]))
             waterfall = self.makeWaterfall(startTime, completeTime, timings)
 
-            if ((resType == "all" or replaceResType(e["_resourceType"]) == resType) and
+            if ((resType == "all" or replaceResType(resourceType) == resType) and
                 (reqType == "all" or req["method"].lower() == reqType) and
                 (filter == "" or (filter.lower() in url.lower()))):
                 t.add_row([id, req["method"], statusCode, urlShorten, time, waterfall])

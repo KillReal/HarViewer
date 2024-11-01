@@ -33,7 +33,7 @@ class ConUtils:
             content = json.loads(content)
         except:
             ()
-        return json.dumps(content, indent = 4)
+        return json.dumps(content, indent = 4, ensure_ascii=False)
 
     @staticmethod
     def prettyJson(content: str):
@@ -59,19 +59,19 @@ class ConUtils:
     @staticmethod
     def colorizeStatusCode(statusCode: int):
         if (statusCode >= 200 and statusCode < 300):
-            statusCode = fgColors.GREEN + str(statusCode) + fgColors.ENDC
+            return fgColors.GREEN + str(statusCode) + fgColors.ENDC
         elif (statusCode >= 300 and statusCode < 400):
-            statusCode = fgColors.YELLOW + str(statusCode) + fgColors.ENDC
+            return fgColors.YELLOW + str(statusCode) + fgColors.ENDC
         elif (statusCode >= 400 and statusCode < 500):
-            statusCode = fgColors.PURPLE + str(statusCode) + fgColors.ENDC
+            return fgColors.PURPLE + str(statusCode) + fgColors.ENDC
         elif (statusCode >= 500 or statusCode == 0):
-            statusCode = fgColors.RED + str(statusCode) + fgColors.ENDC
+            return fgColors.RED + str(statusCode) + fgColors.ENDC
 
-        return statusCode
+        return str(statusCode)
     
     @staticmethod
     def colorizeUrlByResourceType(url: str, resType: str):
-        if (resType == "xhr" or resType == "fetch"):
+        if (resType == "xhr" or resType == "fetch" or resType == "application/json"):
             url = fgColors.BLUE + url + fgColors.ENDC
         # elif (resType == "script"):
         #     url = fgColors.YELLOW + url + fgColors.ENDC

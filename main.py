@@ -1,6 +1,6 @@
 import json
-import codecs
 import os
+import io
 
 from conUtils import ConUtils
 from harViewer import HarViewer
@@ -17,12 +17,12 @@ def main(harFilePath, resType, reqType, conWidth, filter):
     if (conWidth == "auto"):
         conWidth = os.get_terminal_size()[0]
 
-    f = codecs.open(harFilePath, "r", "utf-8")
-    jsonContent = f.read()
+    f = io.open(harFilePath, mode="r", encoding="utf-8")
+    jsonContent = f.read().encode("utf-8")
     har = json.loads(jsonContent)
     harViewer = HarViewer(har, conWidth)
 
-    ConUtils.clear()
+    # ConUtils.clear()
     harViewer.printRequestsTable(resType, reqType, filter)
 
     selectedRequestId = -1
